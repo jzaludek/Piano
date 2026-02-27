@@ -40,9 +40,17 @@
       overflow-x: auto;
       max-width: 100%;
     }
+    .piano-container::-webkit-scrollbar { height: 12px; }
+    .piano-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 6px; }
+    .piano-container::-webkit-scrollbar-thumb { background: rgba(196,181,253,0.4); border-radius: 6px; }
     .piano {
       position: relative;
       display: flex;
+    }
+    .piano::after {
+      content: '';
+      min-width: 16px;
+      flex-shrink: 0;
     }
     .white-key {
       width: 46px;
@@ -262,6 +270,8 @@
     });
 
     // Touch/mouse events
+    const SWIPE_THRESHOLD = 10;
+
     function activate(el) {
       el.classList.add('active');
       playNote(parseFloat(el.dataset.freq));
@@ -271,17 +281,32 @@
     }
 
     document.querySelectorAll('.white-key, .black-key').forEach(key => {
+      let touchStartX = null;
+      let touchHandled = false;
+
       key.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+        touchStartX = e.touches[0].clientX;
+        touchHandled = false;
         activate(key);
-      }, { passive: false });
-      
-      key.addEventListener('touchend', (e) => {
-        e.preventDefault();
+      }, { passive: true });
+
+      key.addEventListener('touchmove', (e) => {
+        if (touchStartX !== null && !touchHandled) {
+          const dx = Math.abs(e.touches[0].clientX - touchStartX);
+          if (dx > SWIPE_THRESHOLD) {
+            deactivate(key);
+            touchHandled = true;
+          }
+        }
+      }, { passive: true });
+
+      key.addEventListener('touchend', () => {
         deactivate(key);
-      }, { passive: false });
-      
-      key.addEventListener('touchcancel', () => deactivate(key));
+        touchStartX = null;
+        touchHandled = false;
+      });
+
+      key.addEventListener('touchcancel', () => { deactivate(key); touchStartX = null; touchHandled = false; });
       key.addEventListener('mousedown', (e) => { e.preventDefault(); activate(key); });
       key.addEventListener('mouseup', () => deactivate(key));
       key.addEventListener('mouseleave', () => deactivate(key));
