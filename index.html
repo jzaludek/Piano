@@ -280,11 +280,14 @@
       el.classList.remove('active');
     }
 
+    let usedTouch = false;
+
     document.querySelectorAll('.white-key, .black-key').forEach(key => {
       let touchStartX = null;
       let touchHandled = false;
 
       key.addEventListener('touchstart', (e) => {
+        usedTouch = true;
         touchStartX = e.touches[0].clientX;
         touchHandled = false;
         activate(key);
@@ -307,9 +310,9 @@
       });
 
       key.addEventListener('touchcancel', () => { deactivate(key); touchStartX = null; touchHandled = false; });
-      key.addEventListener('mousedown', (e) => { e.preventDefault(); activate(key); });
-      key.addEventListener('mouseup', () => deactivate(key));
-      key.addEventListener('mouseleave', () => deactivate(key));
+      key.addEventListener('mousedown', (e) => { if (usedTouch) return; e.preventDefault(); activate(key); });
+      key.addEventListener('mouseup', () => { if (usedTouch) return; deactivate(key); });
+      key.addEventListener('mouseleave', () => { if (usedTouch) return; deactivate(key); });
     });
 
     // Keyboard
